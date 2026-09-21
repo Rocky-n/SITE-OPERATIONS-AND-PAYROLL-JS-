@@ -1,0 +1,68 @@
+import React, { useState } from 'react';
+import { useAuth } from './context/AuthContext';
+import Login from './pages/Login';
+import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
+import Dashboard from './pages/Dashboard';
+import Projects from './pages/Projects';
+import Workers from './pages/Workers';
+import Attendance from './pages/Attendance';
+import Advances from './pages/Advances';
+import Payroll from './pages/Payroll';
+import Ledger from './pages/Ledger';
+import { Loader2 } from 'lucide-react';
+
+function MainLayout() {
+  const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white space-y-4">
+        <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+        <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+          Initializing JS Constructions System...
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  const titles = {
+    dashboard: 'Dashboard Overview',
+    projects: 'Construction Sites ("Running Applications")',
+    workers: 'Worker Directory & Wage Setup',
+    attendance: 'Daily Attendance Roster',
+    advances: 'Wage Advances Tracking',
+    payroll: 'Dynamic Payroll Calculation & Checkout',
+    ledger: 'Payment Transactions & Ledger',
+  };
+
+  return (
+    <div className="min-h-screen flex bg-slate-50">
+      {/* Fixed Sidebar */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        <Navbar title={titles[activeTab] || 'Construction Management'} />
+        <main className="flex-1 pb-16">
+          {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} />}
+          {activeTab === 'projects' && <Projects />}
+          {activeTab === 'workers' && <Workers />}
+          {activeTab === 'attendance' && <Attendance />}
+          {activeTab === 'advances' && <Advances />}
+          {activeTab === 'payroll' && <Payroll />}
+          {activeTab === 'ledger' && <Ledger />}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return <MainLayout />;
+}

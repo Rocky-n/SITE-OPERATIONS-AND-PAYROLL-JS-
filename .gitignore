@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production builds
+dist/
+build/
+*/dist/
+
+# Environment files and temporary runtime data
+.env
+.env.local
+.env.*.local
+*/.env
+*/.env.*.local
+.mongo_uri
+*/.mongo_uri
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
