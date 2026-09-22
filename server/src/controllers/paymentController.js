@@ -18,21 +18,18 @@ const recordPayment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Worker not found' });
     }
 
-    // Determine Status:
-    // Cash: immediately "Paid"
-    // Netbanking & PhonePe: "Pending" awaiting verification
-    let status = incomingStatus;
-    if (!status) {
-      status = paymentMethod === 'Cash' ? 'Paid' : 'Pending';
+    // Determine Status: Only 'Paid' or 'Unpaid' allowed (default to 'Paid')
+    let status = incomingStatus || 'Paid';
+    if (!['Paid', 'Unpaid'].includes(status)) {
+      status = 'Paid';
     }
 
     // Generate unique transaction reference
-    const prefix =
-      paymentMethod === 'PhonePe'
-        ? 'TXN-PP'
-        : paymentMethod === 'Netbanking'
-        ? 'TXN-NB'
-        : 'CASH-REC';
+    let prefix = 'TXN';
+    if (paymentMethod.toLowerCase().includes('cash')) prefix = 'CASH-REC';
+    else if (paymentMethod.toLowerCase().includes('upi') || paymentMethod.toLowerCase().includes('wallet') || paymentMethod.toLowerCase().includes('phonepe')) prefix = 'TXN-UPI';
+    else if (paymentMethod.toLowerCase().includes('netbanking')) prefix = 'TXN-NB';
+
     const timestamp = Date.now();
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const transactionReference = `${prefix}-${timestamp}-${randomSuffix}`;
@@ -44,8 +41,8 @@ const recordPayment = async (req, res) => {
       status,
       transactionReference,
       details: {
-        phoneNumber: details?.phoneNumber || (paymentMethod === 'PhonePe' ? worker.phone : undefined),
-        bankName: details?.bankName || (paymentMethod === 'Netbanking' ? 'Indian Overseas Bank (IOB)' : undefined),
+        phoneNumber: details?.phoneNumber || worker.phone,
+        bankName: details?.bankName,
         notes: details?.notes || `Disbursed via ${paymentMethod}`,
       },
       date: new Date(),

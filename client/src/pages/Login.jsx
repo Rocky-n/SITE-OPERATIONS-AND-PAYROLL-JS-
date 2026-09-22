@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Lock,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -19,6 +20,7 @@ export default function Login() {
     e.preventDefault();
     if (!phoneNumber.trim()) {
       setError('Please enter your phone number');
+      toast.error('Please enter your phone number');
       return;
     }
 
@@ -27,13 +29,29 @@ export default function Login() {
 
     try {
       const res = await login(phoneNumber.trim());
-      if (!res.success) {
+      if (res.success) {
+        toast.success('Welcome Devendiran S', { 
+          icon: '👋', 
+          position: 'top-center', 
+          duration: 1000,
+          style: { 
+            marginTop: '45vh', 
+            fontSize: '1.5rem', 
+            padding: '20px 40px',
+            fontWeight: 'bold',
+            minWidth: '350px'
+          } 
+        });
+      } else {
         // 3. Dynamic Error Handling: Display actual message returned
         setError(res.message || 'Login failed');
+        toast.error(res.message || 'Login failed');
       }
     } catch (err) {
       // 3. Dynamic Error Handling: Display actual error message returned
-      setError(err.response?.data?.message || err.message || 'An unexpected error occurred');
+      const msg = err.response?.data?.message || err.message || 'An unexpected error occurred';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -56,20 +74,20 @@ export default function Login() {
         </div>
 
         {/* Minimal Login Card */}
-        <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-100 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-colors">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-slate-900">
-              Staff Portal Login
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              JS Constructions Admin
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Enter your phone number to access the site operations portal.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Enter your authorized mobile number to manage site operations.
             </p>
           </div>
 
           {/* Dynamic Error Banner */}
           {error && (
-            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2.5 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+            <div className="mb-5 p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 rounded-xl text-xs flex items-center gap-2.5 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
               <span className="font-semibold">{error}</span>
             </div>
           )}

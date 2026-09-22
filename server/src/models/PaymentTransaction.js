@@ -13,13 +13,12 @@ const PaymentTransactionSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['PhonePe', 'Netbanking', 'Cash'],
     required: [true, 'Payment method is required'],
   },
   status: {
     type: String,
-    enum: ['Paid', 'Pending', 'Unpaid', 'Success', 'Failed'],
-    default: 'Pending',
+    enum: ['Paid', 'Unpaid'],
+    default: 'Unpaid',
   },
   transactionReference: {
     type: String,
@@ -27,7 +26,8 @@ const PaymentTransactionSchema = new mongoose.Schema({
     unique: true,
   },
   details: {
-    phoneNumber: { type: String }, // For PhonePe
+    phoneNumber: { type: String }, // For PhonePe / UPI
+    upiId: { type: String },       // For UPI / QR
     bankName: { type: String },    // For Netbanking
     notes: { type: String },
   },

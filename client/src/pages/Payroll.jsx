@@ -13,7 +13,10 @@ import {
   RefreshCw,
   Clock,
   Loader2,
+  FileSpreadsheet,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
 import PaymentModal from '../components/PaymentModal';
 import AdvanceModal from '../components/AdvanceModal';
 import { payrollApi, projectApi, paymentApi } from '../services/api';
@@ -26,14 +29,12 @@ export default function Payroll() {
     totalPaid: 0,
     totalNetPayable: 0,
     paidWorkersCount: 0,
-    pendingWorkersCount: 0,
     unpaidWorkersCount: 0,
     totalWorkers: 0,
   });
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [loading, setLoading] = useState(true);
-  const [confirmingId, setConfirmingId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Modals
@@ -61,6 +62,7 @@ export default function Payroll() {
       setLoading(false);
     } catch (err) {
       setErrorMsg('Failed to compute payroll data');
+      toast.error('Failed to compute payroll data');
       setLoading(false);
     }
   };
@@ -79,19 +81,34 @@ export default function Payroll() {
     setIsAdvanceModalOpen(true);
   };
 
-  // 3. UI Verification Step: 1-click confirmation without input or modal
-  const handleConfirmPayment = async (pendingTransactionId) => {
-    if (!pendingTransactionId) return;
-
-    try {
-      setConfirmingId(pendingTransactionId);
-      await paymentApi.confirm(pendingTransactionId);
-      await fetchPayroll();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to confirm payment');
-    } finally {
-      setConfirmingId(null);
+  // 5. One-Click Payroll Export using xlsx
+  const handleExportExcel = () => {
+    if (payrollData.length === 0) {
+      toast.error('No payroll data available to export');
+      return;
     }
+
+    const exportData = payrollData.map((item) => {
+      const totalDaysWorked =
+        (item.daysPresent || 0) +
+        (item.daysOnePointFive || 0) * 1.5 +
+        (item.daysHalfDay || 0) * 0.5;
+
+      return {
+        'Worker Name': item.worker?.name || 'Worker',
+        'Phone Number': item.worker?.phone || 'N/A',
+        'Total Days Worked': totalDaysWorked,
+        'Net Payable': `₹${(item.netPayable || 0).toLocaleString()}`,
+        'Payment Status': item.paymentStatus || 'Unpaid',
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Payroll Ledger');
+    const fileName = `JS_Constructions_Payroll_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    toast.success('Ledger Downloaded');
   };
 
   return (
@@ -99,17 +116,28 @@ export default function Payroll() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900">Dynamic Payroll Engine</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Dynamic Payroll Engine</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Auto-calculates salary up to date based on attendance, daily wage rate, and advances.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Export Ledger (Excel) Button */}
+          <button
+            onClick={handleExportExcel}
+            disabled={loading || payrollData.length === 0}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
+            title="Download current payroll view as Excel"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export Ledger (Excel)</span>
+          </button>
+
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            className="px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-orange-500"
+            className="px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 shadow-xs focus:ring-2 focus:ring-orange-500"
           >
             <option value="">All Construction Sites</option>
             {projects.map((p) => (
@@ -119,7 +147,7 @@ export default function Payroll() {
 
           <button
             onClick={fetchPayroll}
-            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 shadow-xs transition-colors"
+            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-colors cursor-pointer"
             title="Refresh Payroll"
           >
             <RefreshCw className="w-4 h-4" />
@@ -128,7 +156,7 @@ export default function Payroll() {
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
@@ -136,55 +164,55 @@ export default function Payroll() {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Earned Wages</span>
-          <h3 className="text-2xl font-black text-slate-900 mt-1">₹{summary.totalEarned?.toLocaleString()}</h3>
-          <p className="text-xs text-slate-500 mt-1">Gross labor earnings up to date</p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">₹{summary.totalEarned?.toLocaleString()}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Gross labor earnings up to date</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Advances Deducted</span>
-          <h3 className="text-2xl font-black text-amber-600 mt-1">- ₹{summary.totalAdvances?.toLocaleString()}</h3>
-          <p className="text-xs text-slate-500 mt-1">Direct wage advances taken</p>
+          <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">- ₹{summary.totalAdvances?.toLocaleString()}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Direct wage advances taken</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Paid to Date</span>
-          <h3 className="text-2xl font-black text-blue-600 mt-1">- ₹{summary.totalPaid?.toLocaleString()}</h3>
-          <p className="text-xs text-slate-500 mt-1">Confirmed payments disbursed</p>
+          <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">- ₹{summary.totalPaid?.toLocaleString()}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Confirmed payments disbursed</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-orange-200 bg-orange-50/30 shadow-xs">
-          <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wider">Net Outstanding Payable</span>
-          <h3 className="text-2xl font-black text-orange-600 mt-1">₹{summary.totalNetPayable?.toLocaleString()}</h3>
-          <p className="text-xs text-orange-700 font-medium mt-1">
-            {summary.unpaidWorkersCount} Unpaid • {summary.pendingWorkersCount || 0} Pending • {summary.paidWorkersCount} Paid
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-orange-200 dark:border-orange-900/40 bg-orange-50/30 dark:bg-orange-950/20 shadow-xs">
+          <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Net Outstanding Payable</span>
+          <h3 className="text-2xl font-black text-orange-600 dark:text-orange-400 mt-1">₹{summary.totalNetPayable?.toLocaleString()}</h3>
+          <p className="text-xs text-orange-700 dark:text-orange-400 font-medium mt-1">
+            {summary.unpaidWorkersCount} Unpaid • {summary.paidWorkersCount} Paid
           </p>
         </div>
       </div>
 
       {/* Payroll Table */}
       {loading ? (
-        <div className="py-16 text-center text-slate-400 text-sm font-medium">
-          Computing payroll &amp; checking transactions...
+        <div className="space-y-4">
+          <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-3xl animate-pulse" />
         </div>
       ) : payrollData.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8">
-          <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="font-bold text-slate-700 text-base">No payroll records found</h3>
+        <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8">
+          <Calculator className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="font-bold text-slate-700 dark:text-slate-200 text-base">No payroll records found</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
             Ensure active workers are registered and attendance has been marked.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Worker Details</th>
                   <th className="py-3.5 px-6">Daily Rate</th>
-                  <th className="py-3.5 px-6 text-center">Attendance (P / H / A)</th>
+                  <th className="py-3.5 px-6 text-center">Attendance (1D / 1.5D / H / A)</th>
                   <th className="py-3.5 px-6 text-right">Total Earned</th>
                   <th className="py-3.5 px-6 text-right">Advances</th>
                   <th className="py-3.5 px-6 text-right">Total Paid</th>
@@ -193,17 +221,16 @@ export default function Payroll() {
                   <th className="py-3.5 px-6 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
                 {payrollData.map((item) => {
                   const worker = item.worker;
                   const isPaid = item.paymentStatus === 'Paid';
-                  const isPending = item.paymentStatus === 'Pending';
 
                   return (
-                    <tr key={worker._id} className="hover:bg-orange-50/20 transition-colors">
+                    <tr key={worker._id} className="hover:bg-orange-50/20 dark:hover:bg-orange-950/20 transition-colors">
                       <td className="py-4 px-6">
-                        <div className="font-bold text-slate-900">{worker.name}</div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="font-bold text-slate-900 dark:text-white">{worker.name}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
                           {worker.role || 'Worker'} • {worker.phone}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
@@ -211,7 +238,7 @@ export default function Payroll() {
                         </div>
                       </td>
 
-                      <td className="py-4 px-6 font-semibold text-slate-800">
+                      <td className="py-4 px-6 font-semibold text-slate-800 dark:text-slate-200">
                         ₹{worker.dailyWageRate}
                         <span className="text-[10px] text-slate-400 block font-normal">/ day</span>
                       </td>
@@ -219,8 +246,13 @@ export default function Payroll() {
                       <td className="py-4 px-6 text-center">
                         <div className="inline-flex items-center gap-1.5 font-bold font-mono">
                           <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                            {item.daysPresent}P
+                            {item.daysPresent}×1D
                           </span>
+                          {item.daysOnePointFive > 0 && (
+                            <span className="text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                              {item.daysOnePointFive}×1.5D
+                            </span>
+                          )}
                           <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                             {item.daysHalfDay}H
                           </span>
@@ -248,19 +280,16 @@ export default function Payroll() {
                         </span>
                       </td>
 
-                      {/* Status Badge: Paid (green), Pending (yellow), Unpaid (rose) */}
+                      {/* Status Badge: Paid (green), Unpaid (rose) */}
                       <td className="py-4 px-6 text-center">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
                             isPaid
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              : isPending
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : 'bg-rose-100 text-rose-800 border border-rose-200'
                           }`}
                         >
                           {isPaid && <CheckCircle2 className="w-3 h-3" />}
-                          {isPending && <Clock className="w-3 h-3" />}
                           <span>{item.paymentStatus}</span>
                         </span>
                       </td>
@@ -276,39 +305,18 @@ export default function Payroll() {
                             <HandCoins className="w-4 h-4" />
                           </button>
 
-                          {/* 3. If Pending: Show single "Confirm Payment" button */}
-                          {isPending ? (
-                            <button
-                              onClick={() => handleConfirmPayment(item.pendingTransactionId)}
-                              disabled={confirmingId === item.pendingTransactionId}
-                              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center gap-1.5 transition-all disabled:opacity-50"
-                            >
-                              {confirmingId === item.pendingTransactionId ? (
-                                <>
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  <span>Confirming...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Confirm Payment</span>
-                                </>
-                              )}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleOpenPayment(item)}
-                              disabled={item.netPayable <= 0}
-                              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                                item.netPayable > 0
-                                  ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-md shadow-orange-600/30'
-                                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                              }`}
-                            >
-                              <CreditCard className="w-3.5 h-3.5" />
-                              <span>{isPaid ? 'Paid' : 'Pay Worker'}</span>
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleOpenPayment(item)}
+                            disabled={item.netPayable <= 0}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                              item.netPayable > 0
+                                ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-md shadow-orange-600/30'
+                                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                            }`}
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            <span>{isPaid ? 'Paid' : 'Pay Worker'}</span>
+                          </button>
                         </div>
                       </td>
                     </tr>

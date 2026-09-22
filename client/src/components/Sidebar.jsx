@@ -71,7 +71,9 @@ export default function Sidebar({ activeTab, setActiveTab }) {
       <div className="p-4 border-t border-slate-800 bg-slate-950/60">
         <div className="flex items-center justify-between">
           <div className="truncate pr-2">
-            <p className="text-xs font-semibold text-white truncate">{user?.name || 'Site Manager'}</p>
+            <p className="text-xs font-semibold text-white truncate">
+              {user?.name === 'Site Manager' ? 'Devendiran S' : (user?.name || 'Devendiran S')}
+            </p>
             <p className="text-[11px] text-slate-400 font-mono truncate">{user?.phoneNumber}</p>
           </div>
           <button

@@ -7,13 +7,30 @@ const uriFilePath = path.resolve(__dirname, '../../.mongo_uri');
 
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI;
+    // Check process.env.MONGO_URI first (as specified), then fallback to MONGODB_URI
+    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 
     if (mongoUri && mongoUri.trim() !== '') {
-      console.log(`Connecting to MongoDB URI: ${mongoUri.split('@').pop()}`);
-      await mongoose.connect(mongoUri);
-      console.log('MongoDB connected successfully via URI');
-      return;
+      console.log(`Connecting to MongoDB at: ${mongoUri.split('@').pop()}`);
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (attempts < maxAttempts) {
+        try {
+          attempts++;
+          await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 10000,
+          });
+          console.log('✓ Successfully connected to live JS Constructions database (js_constructions_db)');
+          return;
+        } catch (err) {
+          console.warn(`Attempt ${attempts}/${maxAttempts} to connect to live DB failed: ${err.message}`);
+          if (attempts >= maxAttempts) {
+            console.warn('⚠️ Could not connect to live MongoDB Atlas cluster (make sure current IP is whitelisted on MongoDB Atlas). Falling back to in-memory MongoDB so the server remains active...');
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 2000));
+        }
+      }
     }
 
     // Check if an existing memory server URI was written
@@ -31,7 +48,7 @@ const connectDB = async () => {
     }
 
     // Fallback to spinning up in-memory MongoDB
-    console.log('MONGODB_URI not provided or empty. Starting in-memory MongoDB server...');
+    console.log('MONGO_URI not provided or empty. Starting in-memory MongoDB server...');
     const { MongoMemoryServer } = require('mongodb-memory-server');
     mongod = await MongoMemoryServer.create();
     const memoryUri = mongod.getUri();

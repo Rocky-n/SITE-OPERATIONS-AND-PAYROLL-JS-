@@ -11,6 +11,7 @@ import {
   Users,
   Check,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { attendanceApi, projectApi } from '../services/api';
 
 export default function Attendance() {
@@ -20,7 +21,6 @@ export default function Attendance() {
   const [attendanceList, setAttendanceList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [notification, setNotification] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   // Fetch projects list
@@ -49,6 +49,7 @@ export default function Attendance() {
       setLoading(false);
     } catch (err) {
       setErrorMsg('Failed to load attendance for the selected date');
+      toast.error('Failed to load attendance for the selected date');
       setLoading(false);
     }
   };
@@ -75,9 +76,9 @@ export default function Attendance() {
         status: newStatus,
         notes: target?.notes || '',
       });
-      showNotification(`Attendance updated for ${target?.worker?.name}`);
+      toast.success(`Marked ${target?.worker?.name || 'Worker'} as ${newStatus}`);
     } catch (err) {
-      setErrorMsg('Failed to record attendance change');
+      toast.error('Failed to record attendance change');
     }
   };
 
@@ -100,20 +101,16 @@ export default function Attendance() {
 
       await attendanceApi.bulkMark({ date, records });
       setSaving(false);
-      showNotification(`All workers marked as ${status}`);
+      toast.success(`All workers marked as ${status}`);
     } catch (err) {
       setSaving(false);
-      setErrorMsg('Failed to bulk update attendance');
+      toast.error('Failed to bulk update attendance');
     }
   };
 
-  const showNotification = (msg) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(''), 3000);
-  };
-
   // Summary counts
-  const presentCount = attendanceList.filter((a) => a.status === 'Present').length;
+  const oneDayCount = attendanceList.filter((a) => a.status === '1 Day' || a.status === 'Present').length;
+  const onePointFiveCount = attendanceList.filter((a) => a.status === '1.5 Days').length;
   const halfDayCount = attendanceList.filter((a) => a.status === 'Half-day').length;
   const absentCount = attendanceList.filter((a) => a.status === 'Absent').length;
   const unmarkedCount = attendanceList.filter((a) => a.status === 'Unmarked').length;
@@ -123,56 +120,58 @@ export default function Attendance() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900">Daily Attendance Tracker</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Daily Attendance Tracker</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Log daily attendance records for wage and payroll calculations.
           </p>
         </div>
 
         {/* Date Selector */}
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <Calendar className="w-4 h-4 text-orange-600 ml-2" />
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none pr-2 cursor-pointer"
+            className="text-xs font-bold text-slate-800 dark:text-slate-200 bg-transparent focus:outline-none pr-2 cursor-pointer"
           />
         </div>
       </div>
 
-      {notification && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span>{notification}</span>
-        </div>
-      )}
-
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Roster Controls & Stats */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         {/* Status Counts */}
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 text-xs font-bold">
+          <div className="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span>{presentCount} Present</span>
+            <span>{oneDayCount} 1 Day</span>
           </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 rounded-xl border border-amber-100 text-amber-800 text-xs font-bold">
+          <div className="flex items-center gap-2 px-3.5 py-2 bg-purple-50 dark:bg-purple-950/50 rounded-xl border border-purple-100 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-xs font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+            <span>1.5 Days</span>
+            {onePointFiveCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-md bg-purple-200/60 dark:bg-purple-800/60 text-[11px] font-mono">
+                ({onePointFiveCount})
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 dark:bg-amber-950/50 rounded-xl border border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
             <span>{halfDayCount} Half-day</span>
           </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-rose-50 rounded-xl border border-rose-100 text-rose-800 text-xs font-bold">
+          <div className="flex items-center gap-2 px-3.5 py-2 bg-rose-50 dark:bg-rose-950/50 rounded-xl border border-rose-100 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-bold">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
             <span>{absentCount} Absent</span>
           </div>
           {unmarkedCount > 0 && (
-            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs font-bold">
               <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
               <span>{unmarkedCount} Unmarked</span>
             </div>
@@ -184,7 +183,7 @@ export default function Attendance() {
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:bg-white focus:ring-2 focus:ring-orange-500"
+            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-orange-500"
           >
             <option value="">All Sites</option>
             {projects.map((p) => (
@@ -193,17 +192,17 @@ export default function Attendance() {
           </select>
 
           <button
-            onClick={() => handleSetAll('Present')}
+            onClick={() => handleSetAll('1 Day')}
             disabled={saving || attendanceList.length === 0}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Mark All Present
+            Mark All 1 Day
           </button>
 
           <button
             onClick={() => handleSetAll('Absent')}
             disabled={saving || attendanceList.length === 0}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
+            className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
           >
             Mark All Absent
           </button>
@@ -212,30 +211,32 @@ export default function Attendance() {
 
       {/* Attendance Roster Table */}
       {loading ? (
-        <div className="py-16 text-center text-slate-400 text-sm font-medium">
-          Loading attendance roster...
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
+          ))}
         </div>
       ) : attendanceList.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8">
-          <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="font-bold text-slate-700 text-base">No active workers found</h3>
+        <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8">
+          <Users className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="font-bold text-slate-700 dark:text-slate-200 text-base">No active workers found</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
             Please register workers in the Worker Registry to start recording attendance.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Worker Name &amp; Trade</th>
                   <th className="py-3.5 px-6">Assigned Site</th>
                   <th className="py-3.5 px-6 text-center">Daily Wage Rate</th>
                   <th className="py-3.5 px-6 text-center">Mark Attendance Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
                 {attendanceList.map((item) => {
                   const worker = item.worker;
                   const currentStatus = item.status;
@@ -257,18 +258,32 @@ export default function Attendance() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-center gap-2">
-                          {/* Present Button */}
+                          {/* 1 Day Button */}
                           <button
                             type="button"
-                            onClick={() => handleStatusChange(worker._id, 'Present')}
+                            onClick={() => handleStatusChange(worker._id, '1 Day')}
                             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                              currentStatus === 'Present'
+                              currentStatus === '1 Day' || currentStatus === 'Present'
                                 ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/40'
                                 : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
                             }`}
                           >
                             <Check className="w-3.5 h-3.5" />
-                            <span>Present</span>
+                            <span>1 Day</span>
+                          </button>
+
+                          {/* 1.5 Days Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(worker._id, '1.5 Days')}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                              currentStatus === '1.5 Days'
+                                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 ring-2 ring-purple-500/40'
+                                : 'bg-slate-100 text-slate-600 hover:bg-purple-50 hover:text-purple-700'
+                            }`}
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>1.5 Days</span>
                           </button>
 
                           {/* Half-day Button */}

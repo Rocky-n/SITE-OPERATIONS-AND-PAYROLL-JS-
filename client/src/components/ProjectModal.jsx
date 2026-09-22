@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building2, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { projectApi } from '../services/api';
 
 export default function ProjectModal({ projectToEdit, isOpen, onClose, onSuccess }) {
@@ -37,6 +38,7 @@ export default function ProjectModal({ projectToEdit, isOpen, onClose, onSuccess
     e.preventDefault();
     if (!name || !location || !startDate) {
       setErrorMsg('Project name, location, and start date are required');
+      toast.error('Project name, location, and start date are required');
       return;
     }
 
@@ -54,8 +56,10 @@ export default function ProjectModal({ projectToEdit, isOpen, onClose, onSuccess
 
       if (projectToEdit) {
         await projectApi.update(projectToEdit._id, payload);
+        toast.success(`Project "${name}" updated`);
       } else {
         await projectApi.create(payload);
+        toast.success(`Project "${name}" created`);
       }
 
       setLoading(false);
@@ -63,13 +67,15 @@ export default function ProjectModal({ projectToEdit, isOpen, onClose, onSuccess
       onClose();
     } catch (err) {
       setLoading(false);
-      setErrorMsg(err.response?.data?.message || 'Failed to save project');
+      const msg = err.response?.data?.message || 'Failed to save project';
+      setErrorMsg(msg);
+      toast.error(msg);
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transition-colors">
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
@@ -82,7 +88,7 @@ export default function ProjectModal({ projectToEdit, isOpen, onClose, onSuccess
               <p className="text-xs text-slate-400">Project Management &amp; Site Tracking</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>

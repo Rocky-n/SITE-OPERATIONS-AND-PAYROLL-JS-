@@ -33,17 +33,21 @@ const getPayrollReport = async (req, res) => {
 
         let daysPresent = 0;
         let daysHalfDay = 0;
+        let daysOnePointFive = 0;
         let daysAbsent = 0;
 
         attendanceRecords.forEach((att) => {
-          if (att.status === 'Present') daysPresent += 1;
+          if (att.status === '1 Day' || att.status === 'Present') daysPresent += 1;
           else if (att.status === 'Half-day') daysHalfDay += 1;
+          else if (att.status === '1.5 Days') daysOnePointFive += 1;
           else if (att.status === 'Absent') daysAbsent += 1;
         });
 
-        // Total Earned = (Days Present * Daily Wage Rate) + (Half-days * 0.5 * Daily Wage Rate)
+        // Total Earned = (Days (1 Day) * 1 * Daily Wage) + (Half-days * 0.5 * Daily Wage) + (1.5 Days * 1.5 * Daily Wage)
         const totalEarned = Math.round(
-          (daysPresent * worker.dailyWageRate) + (daysHalfDay * 0.5 * worker.dailyWageRate)
+          (daysPresent * worker.dailyWageRate) +
+          (daysHalfDay * 0.5 * worker.dailyWageRate) +
+          (daysOnePointFive * 1.5 * worker.dailyWageRate)
         );
 
         // 2. Total Advances
@@ -59,18 +63,13 @@ const getPayrollReport = async (req, res) => {
         );
         const totalPaid = confirmedPayments.reduce((sum, item) => sum + item.amount, 0);
 
-        // Check if there is a pending payment transaction
-        const pendingTx = payments.find((p) => p.status === 'Pending');
-
         // 4. Net Payable calculation
         const rawNet = totalEarned - totalAdvances - totalPaid;
         const netPayable = Math.max(0, rawNet);
 
-        // 5. Determine Payment Status: "Paid", "Pending", or "Unpaid"
+        // 5. Determine Payment Status: strictly "Paid" or "Unpaid"
         let paymentStatus = 'Unpaid';
-        if (pendingTx) {
-          paymentStatus = 'Pending';
-        } else if (netPayable === 0 && (totalEarned > 0 || totalAdvances > 0 || totalPaid > 0)) {
+        if (netPayable === 0 && (totalEarned > 0 || totalAdvances > 0 || totalPaid > 0)) {
           paymentStatus = 'Paid';
         } else {
           paymentStatus = 'Unpaid';
@@ -87,15 +86,13 @@ const getPayrollReport = async (req, res) => {
           },
           daysPresent,
           daysHalfDay,
+          daysOnePointFive,
           daysAbsent,
           totalEarned,
           totalAdvances,
           totalPaid,
           netPayable,
-          paymentStatus, // 'Paid' | 'Pending' | 'Unpaid'
-          pendingTransactionId: pendingTx ? pendingTx._id : null,
-          pendingTransactionRef: pendingTx ? pendingTx.transactionReference : null,
-          pendingAmount: pendingTx ? pendingTx.amount : null,
+          paymentStatus, // 'Paid' | 'Unpaid'
           lastPaymentDate: payments.length > 0 ? payments[0].date : null,
         };
       })
@@ -109,7 +106,6 @@ const getPayrollReport = async (req, res) => {
         acc.totalPaid += item.totalPaid;
         acc.totalNetPayable += item.netPayable;
         if (item.paymentStatus === 'Paid') acc.paidWorkersCount += 1;
-        else if (item.paymentStatus === 'Pending') acc.pendingWorkersCount += 1;
         else acc.unpaidWorkersCount += 1;
         return acc;
       },
@@ -119,7 +115,6 @@ const getPayrollReport = async (req, res) => {
         totalPaid: 0,
         totalNetPayable: 0,
         paidWorkersCount: 0,
-        pendingWorkersCount: 0,
         unpaidWorkersCount: 0,
         totalWorkers: payrollList.length,
       }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { workerApi } from '../services/api';
 
 export default function WorkerModal({ projects, workerToEdit, isOpen, onClose, onSuccess }) {
@@ -36,6 +37,7 @@ export default function WorkerModal({ projects, workerToEdit, isOpen, onClose, o
     e.preventDefault();
     if (!name || !phone || !dailyWageRate || !assignedProject) {
       setErrorMsg('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -54,8 +56,10 @@ export default function WorkerModal({ projects, workerToEdit, isOpen, onClose, o
 
       if (workerToEdit) {
         await workerApi.update(workerToEdit._id, payload);
+        toast.success(`Worker "${name}" updated`);
       } else {
         await workerApi.create(payload);
+        toast.success(`Worker "${name}" registered`);
       }
 
       setLoading(false);
@@ -63,7 +67,9 @@ export default function WorkerModal({ projects, workerToEdit, isOpen, onClose, o
       onClose();
     } catch (err) {
       setLoading(false);
-      setErrorMsg(err.response?.data?.message || 'Failed to save worker details');
+      const msg = err.response?.data?.message || 'Failed to save worker details';
+      setErrorMsg(msg);
+      toast.error(msg);
     }
   };
 
@@ -80,7 +86,7 @@ export default function WorkerModal({ projects, workerToEdit, isOpen, onClose, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 transition-colors">
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
@@ -93,7 +99,7 @@ export default function WorkerModal({ projects, workerToEdit, isOpen, onClose, o
               <p className="text-xs text-slate-400">Worker Registry &amp; Wage Setup</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>

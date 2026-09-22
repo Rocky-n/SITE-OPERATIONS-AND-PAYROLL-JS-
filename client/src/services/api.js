@@ -71,6 +71,7 @@ export const attendanceApi = {
   mark: (data) => API.post('/attendance', data),
   bulkMark: (data) => API.post('/attendance/bulk', data),
   getWorkerHistory: (workerId) => API.get(`/attendance/worker/${workerId}`),
+  getTrends: (days = 7) => API.get(`/attendance/trends?days=${days}`),
 };
 
 // Advance Services

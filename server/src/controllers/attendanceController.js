@@ -52,7 +52,7 @@ const markAttendance = async (req, res) => {
       return res.status(400).json({ success: false, message: 'workerId, date, and status are required' });
     }
 
-    const validStatuses = ['Present', 'Absent', 'Half-day'];
+    const validStatuses = ['1 Day', 'Present', 'Absent', 'Half-day', '1.5 Days'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: `Status must be one of: ${validStatuses.join(', ')}` });
     }
@@ -113,13 +113,15 @@ const getWorkerAttendanceHistory = async (req, res) => {
     const summary = {
       present: 0,
       halfDay: 0,
+      onePointFive: 0,
       absent: 0,
       totalRecorded: records.length,
     };
 
     records.forEach((r) => {
-      if (r.status === 'Present') summary.present += 1;
+      if (r.status === '1 Day' || r.status === 'Present') summary.present += 1;
       else if (r.status === 'Half-day') summary.halfDay += 1;
+      else if (r.status === '1.5 Days') summary.onePointFive += 1;
       else if (r.status === 'Absent') summary.absent += 1;
     });
 
@@ -129,9 +131,57 @@ const getWorkerAttendanceHistory = async (req, res) => {
   }
 };
 
+// Get attendance trends for the last N days (default: 7)
+const getAttendanceTrends = async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    const dateList = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dateList.push(d.toISOString().split('T')[0]);
+    }
+
+    const startDate = dateList[0];
+    const endDate = dateList[dateList.length - 1];
+
+    const records = await Attendance.find({
+      date: { $gte: startDate, $lte: endDate },
+      status: { $in: ['1 Day', 'Present', '1.5 Days'] },
+    });
+
+    const dateCounts = {};
+    dateList.forEach((dt) => {
+      dateCounts[dt] = 0;
+    });
+
+    records.forEach((r) => {
+      if (dateCounts[r.date] !== undefined) {
+        dateCounts[r.date] += 1;
+      }
+    });
+
+    const trendData = dateList.map((dt) => {
+      const [year, month, day] = dt.split('-');
+      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return {
+        date: dt,
+        label: dateObj.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+        workers: dateCounts[dt] || 0,
+      };
+    });
+
+    res.status(200).json({ success: true, data: trendData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch attendance trends', error: error.message });
+  }
+};
+
 module.exports = {
   getAttendanceByDate,
   markAttendance,
   bulkMarkAttendance,
   getWorkerAttendanceHistory,
+  getAttendanceTrends,
 };

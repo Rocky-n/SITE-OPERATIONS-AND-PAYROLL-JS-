@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
@@ -15,6 +17,16 @@ import { Loader2 } from 'lucide-react';
 function MainLayout() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  useEffect(() => {
+    // Initialize dark mode class from localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -42,7 +54,7 @@ function MainLayout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Fixed Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -64,5 +76,10 @@ function MainLayout() {
 }
 
 export default function App() {
-  return <MainLayout />;
+  return (
+    <ErrorBoundary>
+      <Toaster position="top-center" toastOptions={{ duration: 3500 }} />
+      <MainLayout />
+    </ErrorBoundary>
+  );
 }

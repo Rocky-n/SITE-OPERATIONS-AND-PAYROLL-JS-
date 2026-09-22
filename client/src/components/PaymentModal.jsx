@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Smartphone,
   Landmark,
   Banknote,
+  Copy,
+  Check,
   Loader2,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
   ExternalLink,
-  ShieldCheck,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { paymentApi } from '../services/api';
 
 const NETBANKING_BANKS = [
@@ -44,117 +45,176 @@ const NETBANKING_BANKS = [
 export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
   if (!isOpen || !worker) return null;
 
-  const [method, setMethod] = useState('Netbanking');
+  const workerObj = worker.worker || worker;
+  const workerName = workerObj?.name || 'Worker';
+  const workerPhone = workerObj?.phone || '';
+
+  const [method, setMethod] = useState('Cash');
   const [amount, setAmount] = useState(worker.netPayable || 0);
-  const [phonePeNumber, setPhonePeNumber] = useState(worker.worker?.phone || '');
+
+  // Netbanking State
   const [selectedBank, setSelectedBank] = useState(NETBANKING_BANKS[0]);
-  const [cashNotes, setCashNotes] = useState('Handed cash on site');
+
+  // Copy state for UPI
+  const [copied, setCopied] = useState(false);
+
+  // Status & Error
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handlePay = async (e) => {
-    e.preventDefault();
+  // Sync state with incoming worker
+  useEffect(() => {
+    if (worker) {
+      setAmount(worker.netPayable || 0);
+      setMethod('Cash');
+      setSelectedBank(NETBANKING_BANKS[0]);
+      setCopied(false);
+      setErrorMsg('');
+    }
+  }, [worker]);
+
+  // Copy phone number to clipboard
+  const handleCopyPhone = async () => {
+    if (!workerPhone) return;
+    try {
+      await navigator.clipboard.writeText(workerPhone.replace(/\D/g, '').slice(-10) || workerPhone);
+      setCopied(true);
+      toast.success('Mobile number copied!');
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.error('Failed to copy phone number:', err);
+    }
+  };
+
+  // 1. Cash Payment -> Marks instantly as "Paid" after confirmation
+  const handlePayCash = async () => {
     if (!amount || amount <= 0) {
-      setErrorMsg('Please enter a valid amount to pay');
+      setErrorMsg('Please enter a valid disbursement amount');
+      toast.error('Please enter a valid disbursement amount');
       return;
     }
 
-    setErrorMsg('');
+    const confirmed = window.confirm("Are you sure you want to mark this as Paid?");
+    if (!confirmed) return;
+
     setLoading(true);
+    setErrorMsg('');
 
-    // 1. Netbanking Flow: Opens bank in new tab & records with status "Pending"
-    if (method === 'Netbanking') {
-      try {
-        if (selectedBank?.url) {
-          window.open(selectedBank.url, '_blank', 'noopener,noreferrer');
-        }
+    try {
+      await paymentApi.record({
+        workerId: workerObj._id,
+        amount: Number(amount),
+        paymentMethod: 'Cash',
+        status: 'Paid',
+        details: {
+          notes: 'Handed cash on site',
+        },
+      });
 
-        await paymentApi.record({
-          workerId: worker.worker._id,
-          amount: Number(amount),
-          paymentMethod: 'Netbanking',
-          status: 'Pending',
-          details: {
-            bankName: selectedBank.name,
-            notes: `Netbanking - ${selectedBank.code}`,
-          },
-        });
+      setLoading(false);
+      toast.success('Cash payment recorded successfully');
+      if (onSuccess) onSuccess();
+      handleClose();
+    } catch (err) {
+      setLoading(false);
+      const msg = err.response?.data?.message || err.message || 'Failed to record cash payment';
+      setErrorMsg(msg);
+      toast.error(msg);
+    }
+  };
 
-        setLoading(false);
-        if (onSuccess) onSuccess();
-        handleClose();
-      } catch (err) {
-        setLoading(false);
-        setErrorMsg(err.response?.data?.message || 'Failed to record Netbanking transaction');
-      }
+  // 2. UPI / Mobile Wallet Payment -> Confirms as "Paid" after confirmation
+  const handlePayUPI = async () => {
+    if (!amount || amount <= 0) {
+      setErrorMsg('Please enter a valid disbursement amount');
+      toast.error('Please enter a valid disbursement amount');
       return;
     }
 
-    // 2. PhonePe Flow: Opens PhonePe in new tab & records with status "Pending"
-    if (method === 'PhonePe') {
-      if (!phonePeNumber) {
-        setLoading(false);
-        setErrorMsg('Please enter receiver PhonePe number');
-        return;
-      }
+    const confirmed = window.confirm("Are you sure you want to mark this as Paid?");
+    if (!confirmed) return;
 
-      try {
-        // Open PhonePe in new tab
-        window.open('https://www.phonepe.com/', '_blank', 'noopener,noreferrer');
+    setLoading(true);
+    setErrorMsg('');
 
-        await paymentApi.record({
-          workerId: worker.worker._id,
-          amount: Number(amount),
-          paymentMethod: 'PhonePe',
-          status: 'Pending',
-          details: {
-            phoneNumber: phonePeNumber,
-            notes: `PhonePe transfer to ${phonePeNumber}`,
-          },
-        });
+    try {
+      await paymentApi.record({
+        workerId: workerObj._id,
+        amount: Number(amount),
+        paymentMethod: 'UPI',
+        status: 'Paid',
+        details: {
+          phoneNumber: workerPhone,
+          notes: `Manual UPI transfer to ${workerPhone}`,
+        },
+      });
 
-        setLoading(false);
-        if (onSuccess) onSuccess();
-        handleClose();
-      } catch (err) {
-        setLoading(false);
-        setErrorMsg(err.response?.data?.message || 'Failed to record PhonePe transaction');
-      }
+      setLoading(false);
+      toast.success('UPI payment confirmed and marked as Paid');
+      if (onSuccess) onSuccess();
+      handleClose();
+    } catch (err) {
+      setLoading(false);
+      const msg = err.response?.data?.message || err.message || 'Failed to confirm UPI payment';
+      setErrorMsg(msg);
+      toast.error(msg);
+    }
+  };
+
+  // 3. Netbanking Payment -> Opens Bank URL & Records as "Paid" after confirmation
+  const handlePayNetbanking = async () => {
+    if (!amount || amount <= 0) {
+      setErrorMsg('Please enter a valid disbursement amount');
+      toast.error('Please enter a valid disbursement amount');
       return;
     }
 
-    // 3. Cash Flow: Immediately sets status to "Paid"
-    if (method === 'Cash') {
-      try {
-        await paymentApi.record({
-          workerId: worker.worker._id,
-          amount: Number(amount),
-          paymentMethod: 'Cash',
-          status: 'Paid',
-          details: {
-            notes: cashNotes,
-          },
-        });
+    const confirmed = window.confirm("Are you sure you want to mark this as Paid?");
+    if (!confirmed) return;
 
-        setLoading(false);
-        if (onSuccess) onSuccess();
-        handleClose();
-      } catch (err) {
-        setLoading(false);
-        setErrorMsg(err.response?.data?.message || 'Failed to record cash payment');
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      // Open the bank's official portal in a new tab
+      if (selectedBank?.url) {
+        window.open(selectedBank.url, '_blank', 'noopener,noreferrer');
       }
+
+      // Record transaction with status "Paid" and paymentMethod including bank code
+      await paymentApi.record({
+        workerId: workerObj._id,
+        amount: Number(amount),
+        paymentMethod: `Netbanking - ${selectedBank.code}`,
+        status: 'Paid',
+        details: {
+          bankName: selectedBank.name,
+          notes: `Netbanking payment via ${selectedBank.name}`,
+        },
+      });
+
+      setLoading(false);
+      toast.success(`Netbanking payment via ${selectedBank.name} recorded as Paid`);
+      if (onSuccess) onSuccess();
+      handleClose();
+    } catch (err) {
+      setLoading(false);
+      const msg = err.response?.data?.message || err.message || 'Failed to record Netbanking transaction';
+      setErrorMsg(msg);
+      toast.error(msg);
     }
   };
 
   const handleClose = () => {
     setErrorMsg('');
     setLoading(false);
+    setCopied(false);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 dark:border-slate-800 transition-colors">
         {/* Modal Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -163,81 +223,84 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
             </div>
             <div>
               <h3 className="font-bold text-base">Pay Worker Salary</h3>
-              <p className="text-xs text-slate-400">Checkout &amp; Ledger Disbursal</p>
+              <p className="text-xs text-slate-400">Checkout &amp; Disbursal</p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Worker Summary Banner */}
-        <div className="px-6 py-3 bg-orange-50 border-b border-orange-100 flex items-center justify-between text-xs">
+        <div className="px-6 py-3 bg-orange-50 dark:bg-orange-950/40 border-b border-orange-100 dark:border-orange-900/40 flex items-center justify-between text-xs">
           <div>
-            <span className="font-semibold text-slate-800">{worker.worker?.name}</span>
-            <span className="text-slate-500 ml-2">({worker.worker?.role || 'Worker'})</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{workerName}</span>
+            <span className="text-slate-500 dark:text-slate-400 ml-2">({workerObj?.role || 'Worker'})</span>
           </div>
           <div className="text-right">
-            <span className="text-slate-500">Current Net Payable: </span>
-            <span className="font-bold text-orange-700 text-sm">₹{worker.netPayable?.toLocaleString()}</span>
+            <span className="text-slate-500 dark:text-slate-400">Current Net Payable: </span>
+            <span className="font-bold text-orange-700 dark:text-orange-400 text-sm">₹{worker.netPayable?.toLocaleString()}</span>
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handlePay} className="p-6 space-y-5">
+        {/* Form Container */}
+        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* Payment Method Selector */}
+          {/* Payment Method Selector (3 Options: Cash, UPI / Mobile Wallet, Netbanking) */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               Select Payment Mode
             </label>
             <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setMethod('Netbanking')}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                  method === 'Netbanking'
-                    ? 'border-blue-600 bg-blue-50/70 text-blue-800 ring-2 ring-blue-600/30 font-semibold shadow-xs'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                }`}
-              >
-                <Landmark className="w-5 h-5 text-blue-600" />
-                <span className="text-xs">Netbanking</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMethod('PhonePe')}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                  method === 'PhonePe'
-                    ? 'border-purple-600 bg-purple-50/70 text-purple-800 ring-2 ring-purple-600/30 font-semibold shadow-xs'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                }`}
-              >
-                <Smartphone className="w-5 h-5 text-purple-600" />
-                <span className="text-xs">PhonePe</span>
-              </button>
-
+              {/* Cash Option */}
               <button
                 type="button"
                 onClick={() => setMethod('Cash')}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
+                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                   method === 'Cash'
                     ? 'border-emerald-600 bg-emerald-50/70 text-emerald-800 ring-2 ring-emerald-600/30 font-semibold shadow-xs'
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
                 <Banknote className="w-5 h-5 text-emerald-600" />
-                <span className="text-xs">Cash</span>
+                <span className="text-xs font-bold">Cash</span>
+              </button>
+
+              {/* UPI / Mobile Wallet Option */}
+              <button
+                type="button"
+                onClick={() => setMethod('UPI')}
+                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                  method === 'UPI'
+                    ? 'border-purple-600 bg-purple-50/70 text-purple-800 ring-2 ring-purple-600/30 font-semibold shadow-xs'
+                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                }`}
+              >
+                <Smartphone className="w-5 h-5 text-purple-600" />
+                <span className="text-xs font-bold">UPI / Mobile Wallet</span>
+              </button>
+
+              {/* Netbanking Option */}
+              <button
+                type="button"
+                onClick={() => setMethod('Netbanking')}
+                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                  method === 'Netbanking'
+                    ? 'border-blue-600 bg-blue-50/70 text-blue-800 ring-2 ring-blue-600/30 font-semibold shadow-xs'
+                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                }`}
+              >
+                <Landmark className="w-5 h-5 text-blue-600" />
+                <span className="text-xs font-bold">Netbanking</span>
               </button>
             </div>
           </div>
@@ -264,17 +327,91 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
             </p>
           </div>
 
-          {/* Netbanking: Bank Selection Dropdown */}
+          {/* 1. Cash Section */}
+          {method === 'Cash' && (
+            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+                  <Banknote className="w-4 h-4 text-emerald-700" />
+                  <span>Direct Cash Payment</span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                  Instant Paid
+                </span>
+              </div>
+              <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-medium">Net Payable Amount:</span>
+                <span className="text-base font-black text-emerald-700">₹{Number(amount).toLocaleString()}</span>
+              </div>
+              <p className="text-[11px] text-emerald-800 leading-relaxed">
+                Clicking <strong>"Mark as Paid"</strong> immediately records this cash payment and updates the worker's status to Paid.
+              </p>
+            </div>
+          )}
+
+          {/* 2. UPI / Mobile Wallet Section */}
+          {method === 'UPI' && (
+            <div className="p-4 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-purple-950">
+                  <Smartphone className="w-4 h-4 text-purple-700" />
+                  <span>Manual UPI / Mobile Transfer</span>
+                </div>
+                <span className="text-[10px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-md">
+                  PhonePe / GPay / Paytm
+                </span>
+              </div>
+
+              {/* Worker Phone Number with Copy Button */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Worker Mobile / UPI Number
+                </label>
+                <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-purple-200 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <Smartphone className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-bold font-mono text-slate-900">
+                      {workerPhone || 'No phone number on record'}
+                    </span>
+                  </div>
+                  {workerPhone && (
+                    <button
+                      type="button"
+                      onClick={handleCopyPhone}
+                      className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-700">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Transfer Instructions */}
+              <div className="p-3.5 bg-white/80 rounded-xl border border-purple-100 text-xs text-slate-600 space-y-1.5 leading-relaxed">
+                <p className="font-bold text-purple-900">Transfer Instructions:</p>
+                <p>1. Open your UPI app (PhonePe, Google Pay, Paytm, etc.).</p>
+                <p>2. Send <strong>₹{Number(amount).toLocaleString()}</strong> manually to the mobile number above.</p>
+                <p>3. Once the transfer is complete on your app, click <strong>"Confirm Payment"</strong> below to record it as Paid in the ledger.</p>
+              </div>
+            </div>
+          )}
+
+          {/* 3. Netbanking Section */}
           {method === 'Netbanking' && (
             <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-blue-950">
-                  <Landmark className="w-4 h-4 text-blue-700" />
-                  <span>Select Bank Portal</span>
-                </div>
-                <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
-                  Status: Pending Verification
-                </span>
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-950">
+                <Landmark className="w-4 h-4 text-blue-700" />
+                <span>Select Bank Portal</span>
               </div>
 
               <div>
@@ -303,112 +440,87 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
                 </span>
                 <ExternalLink className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               </div>
-
-              <p className="text-[11px] text-blue-800 leading-relaxed">
-                Clicking <strong>"Proceed to Netbanking"</strong> will open the <strong>{selectedBank.name}</strong> portal in a new tab and mark this payment as <strong className="text-amber-700">Pending</strong> on the dashboard. You can confirm it in 1-click once the transfer is completed.
-              </p>
             </div>
           )}
 
-          {/* PhonePe Specific Fields */}
-          {method === 'PhonePe' && (
-            <div className="p-4 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-purple-900">
-                  <Smartphone className="w-4 h-4 text-purple-700" />
-                  <span>PhonePe UPI Transfer</span>
-                </div>
-                <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
-                  Status: Pending Verification
-                </span>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Receiver PhonePe Number / VPA
-                </label>
-                <input
-                  type="text"
-                  value={phonePeNumber}
-                  onChange={(e) => setPhonePeNumber(e.target.value)}
-                  placeholder="+91 9876543201"
-                  className="w-full px-3.5 py-2 bg-white border border-purple-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
-                  required
-                />
-                <p className="text-[11px] text-purple-700 mt-1">
-                  Will open PhonePe in a new tab and mark payment as <strong className="text-amber-700">Pending</strong> until confirmed.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Cash Specific Fields */}
-          {method === 'Cash' && (
-            <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
-                  <Banknote className="w-4 h-4 text-emerald-700" />
-                  <span>Direct Cash Disbursement</span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                  Instant Paid
-                </span>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Disbursement Note / Voucher Details
-                </label>
-                <input
-                  type="text"
-                  value={cashNotes}
-                  onChange={(e) => setCashNotes(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white border border-emerald-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <p className="text-[11px] text-emerald-700 mt-1">
-                  Immediately records payment as <strong className="text-emerald-700">Paid</strong> and updates the worker's status badge.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
+          {/* Action Buttons */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-orange-600/30 flex items-center gap-2 transition-all disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <span>
-                    {method === 'Netbanking'
-                      ? 'Proceed to Netbanking'
-                      : method === 'PhonePe'
-                      ? 'Proceed with PhonePe'
-                      : 'Pay via Cash'}
-                  </span>
-                  {method === 'Cash' ? (
-                    <ArrowRight className="w-4 h-4" />
-                  ) : (
+
+            {/* Cash: Mark as Paid */}
+            {method === 'Cash' && (
+              <button
+                type="button"
+                onClick={handlePayCash}
+                disabled={loading || !amount || amount <= 0}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Recording...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Mark as Paid</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* UPI: Confirm Payment */}
+            {method === 'UPI' && (
+              <button
+                type="button"
+                onClick={handlePayUPI}
+                disabled={loading || !amount || amount <= 0}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Confirming...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Confirm Payment</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Netbanking: Proceed to Netbanking */}
+            {method === 'Netbanking' && (
+              <button
+                type="button"
+                onClick={handlePayNetbanking}
+                disabled={loading || !amount || amount <= 0}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Opening Portal...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Proceed to Netbanking</span>
                     <ExternalLink className="w-4 h-4" />
-                  )}
-                </>
-              )}
-            </button>
+                  </>
+                )}
+              </button>
+            )}
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
