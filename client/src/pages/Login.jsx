@@ -39,7 +39,10 @@ export default function Login() {
             fontSize: '1.5rem', 
             padding: '20px 40px',
             fontWeight: 'bold',
-            minWidth: '350px'
+            minWidth: 'min(350px, 90vw)',
+            maxWidth: '90vw',
+            boxSizing: 'border-box',
+            textAlign: 'center',
           } 
         });
       } else {

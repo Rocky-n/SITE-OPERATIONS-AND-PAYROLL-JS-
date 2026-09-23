@@ -67,11 +67,11 @@ export default function Projects() {
   });
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Construction Sites &amp; Projects</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Construction Sites &amp; Projects</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Manage running applications, active jobsites, and project timelines.
           </p>
@@ -79,7 +79,7 @@ export default function Projects() {
 
         <button
           onClick={handleCreate}
-          className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-md shadow-orange-600/30 flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
+          className="px-5 py-2.5 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-md shadow-orange-600/30 flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add Construction Site</span>
@@ -87,12 +87,12 @@ export default function Projects() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 flex-wrap">
         {['All', 'Active', 'Completed'].map((tab) => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-4 py-2.5 min-h-[40px] rounded-xl text-xs font-bold transition-all cursor-pointer ${
               filter === tab
                 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'

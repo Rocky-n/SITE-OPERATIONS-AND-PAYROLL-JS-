@@ -116,19 +116,19 @@ export default function Attendance() {
   const unmarkedCount = attendanceList.filter((a) => a.status === 'Unmarked').length;
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Daily Attendance Tracker</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Daily Attendance Tracker</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Log daily attendance records for wage and payroll calculations.
           </p>
         </div>
 
         {/* Date Selector */}
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-          <Calendar className="w-4 h-4 text-orange-600 ml-2" />
+        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs self-start sm:self-auto min-h-[44px]">
+          <Calendar className="w-4 h-4 text-orange-600 ml-2 shrink-0" />
           <input
             type="date"
             value={date}
@@ -179,11 +179,11 @@ export default function Attendance() {
         </div>
 
         {/* Quick Batch Actions & Filter */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap self-start md:self-auto">
           <select
             value={selectedProject}
             onChange={(e) => setSelectedProject(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-orange-500"
+            className="px-3 py-2.5 min-h-[44px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-orange-500"
           >
             <option value="">All Sites</option>
             {projects.map((p) => (
@@ -194,7 +194,7 @@ export default function Attendance() {
           <button
             onClick={() => handleSetAll('1 Day')}
             disabled={saving || attendanceList.length === 0}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-3.5 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             Mark All 1 Day
           </button>
@@ -202,7 +202,7 @@ export default function Attendance() {
           <button
             onClick={() => handleSetAll('Absent')}
             disabled={saving || attendanceList.length === 0}
-            className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-3.5 py-2.5 min-h-[44px] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
           >
             Mark All Absent
           </button>
@@ -226,8 +226,8 @@ export default function Attendance() {
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Worker Name &amp; Trade</th>
@@ -244,16 +244,16 @@ export default function Attendance() {
                   return (
                     <tr key={worker._id} className="hover:bg-orange-50/20 transition-colors">
                       <td className="py-4 px-6">
-                        <div className="font-bold text-slate-900 text-sm">{worker.name}</div>
-                        <div className="text-[11px] text-slate-500">{worker.role || 'Laborer'} • {worker.phone}</div>
+                        <div className="font-bold text-slate-900 dark:text-white text-sm">{worker.name}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">{worker.role || 'Laborer'} • {worker.phone}</div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="font-medium text-slate-800">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">
                           {worker.assignedProject?.name || 'Unassigned'}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-center">
-                        <span className="font-bold text-slate-900">₹{worker.dailyWageRate}</span>
+                        <span className="font-bold text-slate-900 dark:text-white">₹{worker.dailyWageRate}</span>
                         <span className="text-[10px] text-slate-400 block">per full day</span>
                       </td>
                       <td className="py-4 px-6">
@@ -262,10 +262,10 @@ export default function Attendance() {
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, '1 Day')}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === '1 Day' || currentStatus === 'Present'
                                 ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/40'
-                                : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-700'
                             }`}
                           >
                             <Check className="w-3.5 h-3.5" />
@@ -276,10 +276,10 @@ export default function Attendance() {
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, '1.5 Days')}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === '1.5 Days'
                                 ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 ring-2 ring-purple-500/40'
-                                : 'bg-slate-100 text-slate-600 hover:bg-purple-50 hover:text-purple-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700'
                             }`}
                           >
                             <Clock className="w-3.5 h-3.5" />
@@ -290,10 +290,10 @@ export default function Attendance() {
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, 'Half-day')}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === 'Half-day'
                                 ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-500/40'
-                                : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-700'
                             }`}
                           >
                             <Clock className="w-3.5 h-3.5" />
@@ -304,10 +304,10 @@ export default function Attendance() {
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, 'Absent')}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === 'Absent'
                                 ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-2 ring-rose-500/40'
-                                : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-700'
                             }`}
                           >
                             <XCircle className="w-3.5 h-3.5" />

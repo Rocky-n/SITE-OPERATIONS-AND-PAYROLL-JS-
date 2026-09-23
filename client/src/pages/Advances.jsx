@@ -61,11 +61,11 @@ export default function Advances() {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Wage Advances Ledger</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Wage Advances Ledger</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Record cash, bank, or UPI advances. Automatically deducted from worker payroll.
           </p>
@@ -73,7 +73,7 @@ export default function Advances() {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-md shadow-orange-600/30 flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
+          className="px-5 py-2.5 min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-md shadow-orange-600/30 flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Record New Advance</span>
@@ -88,28 +88,28 @@ export default function Advances() {
       )}
 
       {/* Summary Card & Filters */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <div className="flex items-center gap-4">
           <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400">
             <HandCoins className="w-6 h-6" />
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Wage Advances Disbursed</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">₹{totalAdvances.toLocaleString()}</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-0.5">₹{totalAdvances.toLocaleString()}</h3>
             <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-0.5">
               Across {advances.length} recorded advance transactions
             </p>
           </div>
         </div>
 
-        <div>
+        <div className="w-full md:w-auto">
           <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Filter By Worker
           </label>
           <select
             value={selectedWorker}
             onChange={(e) => setSelectedWorker(e.target.value)}
-            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-orange-500"
+            className="w-full md:w-auto px-3.5 py-2.5 min-h-[44px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-700 focus:ring-2 focus:ring-orange-500"
           >
             <option value="">All Workers</option>
             {workers.map((w) => (
@@ -136,8 +136,8 @@ export default function Advances() {
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[650px]">
               <thead>
                 <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Worker</th>

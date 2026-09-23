@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react';
 function MainLayout() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Initialize dark mode class from localStorage
@@ -27,6 +28,11 @@ function MainLayout() {
       document.documentElement.classList.remove('dark');
     }
   }, []);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+  };
 
   if (loading) {
     return (
@@ -54,15 +60,24 @@ function MainLayout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors">
-      {/* Fixed Sidebar */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors overflow-x-hidden">
+      {/* Sidebar: Desktop permanent & Mobile drawer */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={handleTabChange}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <Navbar title={titles[activeTab] || 'Construction Management'} />
-        <main className="flex-1 pb-16">
-          {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} />}
+        <Navbar
+          title={titles[activeTab] || 'Construction Management'}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
+        <main className="flex-1 pb-16 overflow-x-hidden">
+          {activeTab === 'dashboard' && <Dashboard setActiveTab={handleTabChange} />}
           {activeTab === 'projects' && <Projects />}
           {activeTab === 'workers' && <Workers />}
           {activeTab === 'attendance' && <Attendance />}

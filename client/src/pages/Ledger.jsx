@@ -62,18 +62,18 @@ export default function Ledger() {
   const cashCount = transactions.filter((t) => t.paymentMethod === 'Cash').length;
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Payment Checkout Ledger</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Payment Checkout Ledger</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Immutable log of all salary disbursals executed via PhonePe, Netbanking, or Cash.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 min-h-[44px]">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Audit-Ready Ledger</span>
           </span>
@@ -91,7 +91,7 @@ export default function Ledger() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xs">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Disbursed</span>
-          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">₹{totalAmount.toLocaleString()}</h3>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">₹{totalAmount.toLocaleString()}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{transactions.length} total transactions</p>
         </div>
 
@@ -100,7 +100,7 @@ export default function Ledger() {
             <span className="text-[11px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">PhonePe UPI</span>
             <Smartphone className="w-4 h-4 text-purple-600 dark:text-purple-400" />
           </div>
-          <h3 className="text-2xl font-black text-purple-900 dark:text-purple-200 mt-1">{phonePeCount} Txns</h3>
+          <h3 className="text-xl sm:text-2xl font-black text-purple-900 dark:text-purple-200 mt-1">{phonePeCount} Txns</h3>
           <p className="text-xs text-purple-700 dark:text-purple-400 mt-1">Instant mobile UPI clearance</p>
         </div>
 
@@ -109,7 +109,7 @@ export default function Ledger() {
             <span className="text-[11px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Netbanking</span>
             <Landmark className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <h3 className="text-2xl font-black text-blue-900 dark:text-blue-200 mt-1">{netbankingCount} Txns</h3>
+          <h3 className="text-xl sm:text-2xl font-black text-blue-900 dark:text-blue-200 mt-1">{netbankingCount} Txns</h3>
           <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Corporate bank transfers</p>
         </div>
 
@@ -118,7 +118,7 @@ export default function Ledger() {
             <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Cash Vouchers</span>
             <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h3 className="text-2xl font-black text-emerald-900 dark:text-emerald-200 mt-1">{cashCount} Txns</h3>
+          <h3 className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-200 mt-1">{cashCount} Txns</h3>
           <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">On-site cash disbursements</p>
         </div>
       </div>
@@ -132,16 +132,16 @@ export default function Ledger() {
             placeholder="Search by worker name, phone, txn ref..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
+            className="w-full pl-9 pr-4 py-2.5 min-h-[44px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
           {['All', 'PhonePe', 'Netbanking', 'Cash'].map((m) => (
             <button
               key={m}
               onClick={() => setSelectedMethod(m)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3.5 py-2 min-h-[40px] rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 selectedMethod === m
                   ? 'bg-slate-900 text-white dark:bg-orange-500 dark:text-white shadow-xs'
                   : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -171,8 +171,8 @@ export default function Ledger() {
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse min-w-[850px]">
               <thead>
                 <tr className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Transaction Ref</th>

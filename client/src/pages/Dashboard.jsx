@@ -169,12 +169,12 @@ export default function Dashboard({ setActiveTab }) {
   // Pulse loading skeleton for Dashboard
   if (loading) {
     return (
-      <div className="p-8 space-y-8 max-w-7xl mx-auto animate-pulse">
+      <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto animate-pulse">
         {/* Banner Skeleton */}
         <div className="h-40 rounded-3xl bg-slate-200 dark:bg-slate-800" />
 
         {/* 4 Stat Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-32 rounded-2xl bg-slate-200 dark:bg-slate-800" />
           ))}
@@ -196,30 +196,30 @@ export default function Dashboard({ setActiveTab }) {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto">
       {/* Welcome & Quick Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-orange-950 text-white p-6 rounded-3xl shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-orange-950 text-white p-5 sm:p-6 rounded-3xl shadow-xl">
         <div>
           <span className="px-3 py-1 rounded-full bg-orange-600/30 text-orange-400 border border-orange-500/30 text-xs font-semibold uppercase tracking-wider">
             Site Operations Hub
           </span>
-          <h2 className="text-2xl font-extrabold mt-2">Construction Management Overview</h2>
+          <h2 className="text-xl sm:text-2xl font-extrabold mt-2">Construction Management Overview</h2>
           <p className="text-slate-300 text-xs mt-1">
             Real-time tracking of site workforces, daily attendance, advances, and payroll clearances.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <button
             onClick={() => setIsAdvanceOpen(true)}
-            className="px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold border border-slate-700 flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+            className="px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold border border-slate-700 flex items-center gap-2 transition-all shadow-sm cursor-pointer min-h-[44px]"
           >
             <HandCoins className="w-4 h-4 text-orange-400" />
             <span>Issue Advance</span>
           </button>
           <button
             onClick={() => setIsProjectOpen(true)}
-            className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-600/30 flex items-center gap-2 transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-semibold shadow-lg shadow-orange-600/30 flex items-center gap-2 transition-all cursor-pointer min-h-[44px]"
           >
             <Plus className="w-4 h-4" />
             <span>New Site</span>
@@ -228,7 +228,7 @@ export default function Dashboard({ setActiveTab }) {
       </div>
 
       {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         <StatCard
           title="Active Workers"
           value={stats.activeWorkers}
@@ -317,8 +317,8 @@ export default function Dashboard({ setActiveTab }) {
             </span>
           </div>
 
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[300px] w-full pt-2">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart data={attendanceTrends || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6} />
                 <XAxis
@@ -368,8 +368,8 @@ export default function Dashboard({ setActiveTab }) {
             </span>
           </div>
 
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[300px] w-full pt-2">
+            <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={payrollTrends || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorPayout" x1="0" y1="0" x2="0" y2="1">

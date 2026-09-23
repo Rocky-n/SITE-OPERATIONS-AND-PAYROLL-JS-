@@ -213,41 +213,41 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 dark:border-slate-800 transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-md md:max-w-lg mx-auto max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 transition-colors my-auto">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center">
               <Banknote className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-base">Pay Worker Salary</h3>
-              <p className="text-xs text-slate-400">Checkout &amp; Disbursal</p>
+              <h3 className="font-bold text-sm sm:text-base">Pay Worker Salary</h3>
+              <p className="text-[11px] sm:text-xs text-slate-400">Checkout &amp; Disbursal</p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Worker Summary Banner */}
-        <div className="px-6 py-3 bg-orange-50 dark:bg-orange-950/40 border-b border-orange-100 dark:border-orange-900/40 flex items-center justify-between text-xs">
+        <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-50 dark:bg-orange-950/40 border-b border-orange-100 dark:border-orange-900/40 flex items-center justify-between text-xs shrink-0">
           <div>
             <span className="font-semibold text-slate-800 dark:text-slate-200">{workerName}</span>
-            <span className="text-slate-500 dark:text-slate-400 ml-2">({workerObj?.role || 'Worker'})</span>
+            <span className="text-slate-500 dark:text-slate-400 ml-1.5">({workerObj?.role || 'Worker'})</span>
           </div>
           <div className="text-right">
-            <span className="text-slate-500 dark:text-slate-400">Current Net Payable: </span>
+            <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Current Net Payable: </span>
             <span className="font-bold text-orange-700 dark:text-orange-400 text-sm">₹{worker.netPayable?.toLocaleString()}</span>
           </div>
         </div>
 
         {/* Form Container */}
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
           {errorMsg && (
             <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -260,47 +260,47 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               Select Payment Mode
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {/* Cash Option */}
               <button
                 type="button"
                 onClick={() => setMethod('Cash')}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[52px] ${
                   method === 'Cash'
-                    ? 'border-emerald-600 bg-emerald-50/70 text-emerald-800 ring-2 ring-emerald-600/30 font-semibold shadow-xs'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                    ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 ring-2 ring-emerald-600/30 font-semibold shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Banknote className="w-5 h-5 text-emerald-600" />
-                <span className="text-xs font-bold">Cash</span>
+                <Banknote className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="text-[11px] sm:text-xs font-bold leading-tight">Cash</span>
               </button>
 
               {/* UPI / Mobile Wallet Option */}
               <button
                 type="button"
                 onClick={() => setMethod('UPI')}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[52px] ${
                   method === 'UPI'
-                    ? 'border-purple-600 bg-purple-50/70 text-purple-800 ring-2 ring-purple-600/30 font-semibold shadow-xs'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                    ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 ring-2 ring-purple-600/30 font-semibold shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Smartphone className="w-5 h-5 text-purple-600" />
-                <span className="text-xs font-bold">UPI / Mobile Wallet</span>
+                <Smartphone className="w-5 h-5 text-purple-600 shrink-0" />
+                <span className="text-[11px] sm:text-xs font-bold leading-tight">UPI / Wallet</span>
               </button>
 
               {/* Netbanking Option */}
               <button
                 type="button"
                 onClick={() => setMethod('Netbanking')}
-                className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[52px] ${
                   method === 'Netbanking'
-                    ? 'border-blue-600 bg-blue-50/70 text-blue-800 ring-2 ring-blue-600/30 font-semibold shadow-xs'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                    ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 ring-2 ring-blue-600/30 font-semibold shadow-xs'
+                    : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Landmark className="w-5 h-5 text-blue-600" />
-                <span className="text-xs font-bold">Netbanking</span>
+                <Landmark className="w-5 h-5 text-blue-600 shrink-0" />
+                <span className="text-[11px] sm:text-xs font-bold leading-tight">Netbanking</span>
               </button>
             </div>
           </div>
@@ -444,12 +444,12 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+              className="min-h-[44px] px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center"
             >
               Cancel
             </button>
@@ -460,7 +460,7 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
                 type="button"
                 onClick={handlePayCash}
                 disabled={loading || !amount || amount <= 0}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                className="min-h-[44px] px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -482,7 +482,7 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
                 type="button"
                 onClick={handlePayUPI}
                 disabled={loading || !amount || amount <= 0}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                className="min-h-[44px] px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -504,7 +504,7 @@ export default function PaymentModal({ worker, isOpen, onClose, onSuccess }) {
                 type="button"
                 onClick={handlePayNetbanking}
                 disabled={loading || !amount || amount <= 0}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                className="min-h-[44px] px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
                   <>
