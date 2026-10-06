@@ -38,7 +38,7 @@ const connectDB = async () => {
       try {
         const cachedUri = fs.readFileSync(uriFilePath, 'utf8').trim();
         if (cachedUri) {
-          await mongoose.connect(cachedUri);
+          await mongoose.connect(cachedUri, { serverSelectionTimeoutMS: 2000 });
           console.log(`Connected to active in-memory MongoDB at ${cachedUri}`);
           return;
         }

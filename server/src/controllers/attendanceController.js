@@ -52,7 +52,7 @@ const markAttendance = async (req, res) => {
       return res.status(400).json({ success: false, message: 'workerId, date, and status are required' });
     }
 
-    const validStatuses = ['1 Day', 'Present', 'Absent', 'Half-day', '1.5 Days'];
+    const validStatuses = ['2 Days', '1.5 Days', '1 Day', 'Present', 'Absent', 'Half-day'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: `Status must be one of: ${validStatuses.join(', ')}` });
     }
@@ -111,17 +111,19 @@ const getWorkerAttendanceHistory = async (req, res) => {
     const records = await Attendance.find({ workerId }).sort({ date: -1 });
 
     const summary = {
+      twoDays: 0,
+      onePointFive: 0,
       present: 0,
       halfDay: 0,
-      onePointFive: 0,
       absent: 0,
       totalRecorded: records.length,
     };
 
     records.forEach((r) => {
-      if (r.status === '1 Day' || r.status === 'Present') summary.present += 1;
-      else if (r.status === 'Half-day') summary.halfDay += 1;
+      if (r.status === '2 Days') summary.twoDays += 1;
       else if (r.status === '1.5 Days') summary.onePointFive += 1;
+      else if (r.status === '1 Day' || r.status === 'Present') summary.present += 1;
+      else if (r.status === 'Half-day') summary.halfDay += 1;
       else if (r.status === 'Absent') summary.absent += 1;
     });
 
@@ -148,7 +150,7 @@ const getAttendanceTrends = async (req, res) => {
 
     const records = await Attendance.find({
       date: { $gte: startDate, $lte: endDate },
-      status: { $in: ['1 Day', 'Present', '1.5 Days'] },
+      status: { $in: ['2 Days', '1.5 Days', '1 Day', 'Present'] },
     });
 
     const dateCounts = {};

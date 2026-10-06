@@ -109,8 +109,9 @@ export default function Attendance() {
   };
 
   // Summary counts
-  const oneDayCount = attendanceList.filter((a) => a.status === '1 Day' || a.status === 'Present').length;
+  const twoDaysCount = attendanceList.filter((a) => a.status === '2 Days').length;
   const onePointFiveCount = attendanceList.filter((a) => a.status === '1.5 Days').length;
+  const oneDayCount = attendanceList.filter((a) => a.status === '1 Day' || a.status === 'Present').length;
   const halfDayCount = attendanceList.filter((a) => a.status === 'Half-day').length;
   const absentCount = attendanceList.filter((a) => a.status === 'Absent').length;
   const unmarkedCount = attendanceList.filter((a) => a.status === 'Unmarked').length;
@@ -147,11 +148,16 @@ export default function Attendance() {
 
       {/* Roster Controls & Stats */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        {/* Status Counts */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span>{oneDayCount} 1 Day</span>
+        {/* Status Counts (Highest to Lowest) */}
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 px-3.5 py-2 bg-teal-50 dark:bg-teal-950/50 rounded-xl border border-teal-100 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+            <span>2 Days</span>
+            {twoDaysCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-md bg-teal-200/60 dark:bg-teal-800/60 text-[11px] font-mono">
+                ({twoDaysCount})
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 px-3.5 py-2 bg-purple-50 dark:bg-purple-950/50 rounded-xl border border-purple-100 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-xs font-bold">
             <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
@@ -161,6 +167,10 @@ export default function Attendance() {
                 ({onePointFiveCount})
               </span>
             )}
+          </div>
+          <div className="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span>{oneDayCount} 1 Day</span>
           </div>
           <div className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 dark:bg-amber-950/50 rounded-xl border border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -227,7 +237,7 @@ export default function Attendance() {
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
           <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse min-w-[760px]">
+            <table className="w-full text-left border-collapse min-w-[840px]">
               <thead>
                 <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-6">Worker Name &amp; Trade</th>
@@ -257,60 +267,74 @@ export default function Attendance() {
                         <span className="text-[10px] text-slate-400 block">per full day</span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex items-center justify-center gap-2">
-                          {/* 1 Day Button */}
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                          {/* 1. 2 Days Button */}
                           <button
                             type="button"
-                            onClick={() => handleStatusChange(worker._id, '1 Day')}
-                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                              currentStatus === '1 Day' || currentStatus === 'Present'
-                                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/40'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-700'
+                            onClick={() => handleStatusChange(worker._id, '2 Days')}
+                            className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                              currentStatus === '2 Days'
+                                ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30 ring-2 ring-teal-500/40'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-teal-50 hover:text-teal-700 dark:hover:bg-teal-950/40 dark:hover:text-teal-300'
                             }`}
                           >
-                            <Check className="w-3.5 h-3.5" />
-                            <span>1 Day</span>
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                            <span>2 Days</span>
                           </button>
 
-                          {/* 1.5 Days Button */}
+                          {/* 2. 1.5 Days Button */}
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, '1.5 Days')}
-                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === '1.5 Days'
                                 ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 ring-2 ring-purple-500/40'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950/40 dark:hover:text-purple-300'
                             }`}
                           >
-                            <Clock className="w-3.5 h-3.5" />
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
                             <span>1.5 Days</span>
                           </button>
 
-                          {/* Half-day Button */}
+                          {/* 3. 1 Day Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(worker._id, '1 Day')}
+                            className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                              currentStatus === '1 Day' || currentStatus === 'Present'
+                                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/40'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5 shrink-0" />
+                            <span>1 Day</span>
+                          </button>
+
+                          {/* 4. Half-day Button */}
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, 'Half-day')}
-                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === 'Half-day'
                                 ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-500/40'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40 dark:hover:text-amber-300'
                             }`}
                           >
-                            <Clock className="w-3.5 h-3.5" />
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
                             <span>Half-day</span>
                           </button>
 
-                          {/* Absent Button */}
+                          {/* 5. Absent Button */}
                           <button
                             type="button"
                             onClick={() => handleStatusChange(worker._id, 'Absent')}
-                            className={`px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                               currentStatus === 'Absent'
                                 ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-2 ring-rose-500/40'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-700'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
                             }`}
                           >
-                            <XCircle className="w-3.5 h-3.5" />
+                            <XCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Absent</span>
                           </button>
                         </div>

@@ -90,8 +90,9 @@ export default function Payroll() {
 
     const exportData = payrollData.map((item) => {
       const totalDaysWorked =
-        (item.daysPresent || 0) +
+        (item.daysTwoDays || 0) * 2 +
         (item.daysOnePointFive || 0) * 1.5 +
+        (item.daysPresent || 0) +
         (item.daysHalfDay || 0) * 0.5;
 
       return {
@@ -244,15 +245,20 @@ export default function Payroll() {
                       </td>
 
                       <td className="py-4 px-6 text-center">
-                        <div className="inline-flex items-center gap-1.5 font-bold font-mono">
-                          <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                            {item.daysPresent}×1D
-                          </span>
+                        <div className="inline-flex flex-wrap items-center justify-center gap-1.5 font-bold font-mono">
+                          {item.daysTwoDays > 0 && (
+                            <span className="text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                              {item.daysTwoDays}×2D
+                            </span>
+                          )}
                           {item.daysOnePointFive > 0 && (
                             <span className="text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
                               {item.daysOnePointFive}×1.5D
                             </span>
                           )}
+                          <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            {item.daysPresent}×1D
+                          </span>
                           <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                             {item.daysHalfDay}H
                           </span>

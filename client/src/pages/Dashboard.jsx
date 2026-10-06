@@ -42,7 +42,7 @@ export default function Dashboard({ setActiveTab }) {
   const [projects, setProjects] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [recentPayments, setRecentPayments] = useState([]);
-  const [todayAttendance, setTodayAttendance] = useState({ oneDay: 0, onePointFive: 0, halfDay: 0, absent: 0, total: 0 });
+  const [todayAttendance, setTodayAttendance] = useState({ twoDays: 0, onePointFive: 0, oneDay: 0, halfDay: 0, absent: 0, total: 0 });
   const [attendanceTrends, setAttendanceTrends] = useState([]);
   const [payrollTrends, setPayrollTrends] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -120,18 +120,20 @@ export default function Dashboard({ setActiveTab }) {
       setRecentPayments(ledger.slice(0, 5));
 
       // Compute attendance counts today
-      let oneDay = 0, onePointFive = 0, halfDay = 0, absent = 0;
+      let twoDays = 0, onePointFive = 0, oneDay = 0, halfDay = 0, absent = 0;
       attendance.forEach((a) => {
         if (!a) return;
-        if (a.status === '1 Day' || a.status === 'Present') oneDay++;
+        if (a.status === '2 Days') twoDays++;
         else if (a.status === '1.5 Days') onePointFive++;
+        else if (a.status === '1 Day' || a.status === 'Present') oneDay++;
         else if (a.status === 'Half-day') halfDay++;
         else if (a.status === 'Absent') absent++;
       });
 
       setTodayAttendance({
-        oneDay,
+        twoDays,
         onePointFive,
+        oneDay,
         halfDay,
         absent,
         total: attendance.length,
@@ -309,7 +311,7 @@ export default function Dashboard({ setActiveTab }) {
                 <h3 className="font-bold text-slate-900 dark:text-white text-base">Attendance Trends</h3>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Workers on site (1 Day &amp; 1.5 Days) over the last 7 days
+                Workers on site (1 Day, 1.5 Days &amp; 2 Days) over the last 7 days
               </p>
             </div>
             <span className="px-2.5 py-1 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 rounded-lg text-xs font-semibold">
@@ -435,16 +437,21 @@ export default function Dashboard({ setActiveTab }) {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 text-center">
-                <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">1 Day</span>
-                <h4 className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">{todayAttendance.oneDay}</h4>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Full day wage</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-800 text-center">
+                <span className="text-xs font-semibold text-teal-800 dark:text-teal-300 uppercase tracking-wider">2 Days</span>
+                <h4 className="text-2xl font-black text-teal-700 dark:text-teal-400 mt-1">{todayAttendance.twoDays}</h4>
+                <p className="text-[11px] text-teal-600 dark:text-teal-400 mt-0.5">200% daily wage</p>
               </div>
               <div className="p-4 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-800 text-center">
                 <span className="text-xs font-semibold text-purple-800 dark:text-purple-300 uppercase tracking-wider">1.5 Days</span>
                 <h4 className="text-2xl font-black text-purple-700 dark:text-purple-400 mt-1">{todayAttendance.onePointFive}</h4>
                 <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5">150% daily wage</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800 text-center">
+                <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">1 Day</span>
+                <h4 className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1">{todayAttendance.oneDay}</h4>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Full day wage</p>
               </div>
               <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800 text-center">
                 <span className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider">Half-Day</span>

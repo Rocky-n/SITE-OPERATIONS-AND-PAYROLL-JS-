@@ -31,23 +31,26 @@ const getPayrollReport = async (req, res) => {
         const workerAttendanceFilter = { workerId: worker._id, ...attendanceFilter };
         const attendanceRecords = await Attendance.find(workerAttendanceFilter);
 
+        let daysTwoDays = 0;
+        let daysOnePointFive = 0;
         let daysPresent = 0;
         let daysHalfDay = 0;
-        let daysOnePointFive = 0;
         let daysAbsent = 0;
 
         attendanceRecords.forEach((att) => {
-          if (att.status === '1 Day' || att.status === 'Present') daysPresent += 1;
-          else if (att.status === 'Half-day') daysHalfDay += 1;
+          if (att.status === '2 Days') daysTwoDays += 1;
           else if (att.status === '1.5 Days') daysOnePointFive += 1;
+          else if (att.status === '1 Day' || att.status === 'Present') daysPresent += 1;
+          else if (att.status === 'Half-day') daysHalfDay += 1;
           else if (att.status === 'Absent') daysAbsent += 1;
         });
 
-        // Total Earned = (Days (1 Day) * 1 * Daily Wage) + (Half-days * 0.5 * Daily Wage) + (1.5 Days * 1.5 * Daily Wage)
+        // Total Earned = (2 Days * 2 * Daily Wage) + (1.5 Days * 1.5 * Daily Wage) + (Days (1 Day) * 1 * Daily Wage) + (Half-days * 0.5 * Daily Wage)
         const totalEarned = Math.round(
+          (daysTwoDays * 2 * worker.dailyWageRate) +
+          (daysOnePointFive * 1.5 * worker.dailyWageRate) +
           (daysPresent * worker.dailyWageRate) +
-          (daysHalfDay * 0.5 * worker.dailyWageRate) +
-          (daysOnePointFive * 1.5 * worker.dailyWageRate)
+          (daysHalfDay * 0.5 * worker.dailyWageRate)
         );
 
         // 2. Total Advances
@@ -84,9 +87,10 @@ const getPayrollReport = async (req, res) => {
             role: worker.role,
             assignedProject: worker.assignedProject,
           },
+          daysTwoDays,
+          daysOnePointFive,
           daysPresent,
           daysHalfDay,
-          daysOnePointFive,
           daysAbsent,
           totalEarned,
           totalAdvances,
