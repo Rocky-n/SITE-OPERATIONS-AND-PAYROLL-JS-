@@ -116,6 +116,61 @@ export default function Attendance() {
   const absentCount = attendanceList.filter((a) => a.status === 'Absent').length;
   const unmarkedCount = attendanceList.filter((a) => a.status === 'Unmarked').length;
 
+  const statusBadges = [
+    {
+      key: '2 Days',
+      label: '2 Days',
+      count: twoDaysCount,
+      dotColor: 'bg-teal-500',
+      containerClass: 'bg-teal-50 dark:bg-teal-950/50 border-teal-100 dark:border-teal-800 text-teal-800 dark:text-teal-300',
+      countBadgeClass: 'bg-teal-200/60 dark:bg-teal-800/60 text-teal-900 dark:text-teal-200',
+    },
+    {
+      key: '1.5 Days',
+      label: '1.5 Days',
+      count: onePointFiveCount,
+      dotColor: 'bg-purple-500',
+      containerClass: 'bg-purple-50 dark:bg-purple-950/50 border-purple-100 dark:border-purple-800 text-purple-800 dark:text-purple-300',
+      countBadgeClass: 'bg-purple-200/60 dark:bg-purple-800/60 text-purple-900 dark:text-purple-200',
+    },
+    {
+      key: '1 Day',
+      label: '1 Day',
+      count: oneDayCount,
+      dotColor: 'bg-emerald-500',
+      containerClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300',
+      countBadgeClass: 'bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-200',
+    },
+    {
+      key: 'Half-day',
+      label: 'Half-day',
+      count: halfDayCount,
+      dotColor: 'bg-amber-500',
+      containerClass: 'bg-amber-50 dark:bg-amber-950/50 border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300',
+      countBadgeClass: 'bg-amber-200/60 dark:bg-amber-800/60 text-amber-900 dark:text-amber-200',
+    },
+    {
+      key: 'Absent',
+      label: 'Absent',
+      count: absentCount,
+      dotColor: 'bg-rose-500',
+      containerClass: 'bg-rose-50 dark:bg-rose-950/50 border-rose-100 dark:border-rose-800 text-rose-800 dark:text-rose-300',
+      countBadgeClass: 'bg-rose-200/60 dark:bg-rose-800/60 text-rose-900 dark:text-rose-200',
+    },
+    ...(unmarkedCount > 0
+      ? [
+          {
+            key: 'Unmarked',
+            label: 'Unmarked',
+            count: unmarkedCount,
+            dotColor: 'bg-slate-400',
+            containerClass: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400',
+            countBadgeClass: 'bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -150,42 +205,18 @@ export default function Attendance() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         {/* Status Counts (Highest to Lowest) */}
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-teal-50 dark:bg-teal-950/50 rounded-xl border border-teal-100 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
-            <span>2 Days</span>
-            {twoDaysCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-md bg-teal-200/60 dark:bg-teal-800/60 text-[11px] font-mono">
-                ({twoDaysCount})
+          {statusBadges.map((badge) => (
+            <div
+              key={badge.key}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold ${badge.containerClass}`}
+            >
+              <span className={`w-2.5 h-2.5 rounded-full ${badge.dotColor}`}></span>
+              <span>{badge.label}</span>
+              <span className={`px-2 py-0.5 rounded text-xs font-mono font-bold ${badge.countBadgeClass}`}>
+                ({badge.count})
               </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-purple-50 dark:bg-purple-950/50 rounded-xl border border-purple-100 dark:border-purple-800 text-purple-800 dark:text-purple-300 text-xs font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-            <span>1.5 Days</span>
-            {onePointFiveCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-md bg-purple-200/60 dark:bg-purple-800/60 text-[11px] font-mono">
-                ({onePointFiveCount})
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span>{oneDayCount} 1 Day</span>
-          </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 dark:bg-amber-950/50 rounded-xl border border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span>{halfDayCount} Half-day</span>
-          </div>
-          <div className="flex items-center gap-2 px-3.5 py-2 bg-rose-50 dark:bg-rose-950/50 rounded-xl border border-rose-100 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-bold">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-            <span>{absentCount} Absent</span>
-          </div>
-          {unmarkedCount > 0 && (
-            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-              <span>{unmarkedCount} Unmarked</span>
             </div>
-          )}
+          ))}
         </div>
 
         {/* Quick Batch Actions & Filter */}
